@@ -36,7 +36,7 @@ int main (int argc, char** argv){
     ros::init(argc, argv, "serial_encoder");
     ros::NodeHandle nh;
 
-    //ros::Subscriber write_sub = nh.subscribe("/encoder_theta", 1000, write_callback);
+    // ros::Subscriber write_sub = nh.subscribe("/encoder_theta", 1000, write_callback);
     ros::Publisher read_pub = nh.advertise<std_msgs::Int16>("/encoder_theta", 1000);
 
     try
@@ -71,10 +71,11 @@ int main (int argc, char** argv){
         if(ser.available()){
             //ROS_INFO_STREAM("Reading from serial port");
             std_msgs::String result;
-            result.data = ser.read(ser.available());
-            double encoder = stod(result.data);
-            //printf("Sub >> encoder theta : %.2lf\n", encoder);
+            std_msgs::Int16 encoder;
 
+            result.data = ser.read(ser.available());
+            encoder.data = stod(result.data);
+            
             //ROS_INFO_STREAM("Read: " << result.data);
             read_pub.publish(encoder);
 
