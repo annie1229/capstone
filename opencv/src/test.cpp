@@ -14,9 +14,11 @@
 
 
 /*------------Constant------------*/
+#define PI              3.141592
+
 #define MORPH_MASK      10                  // 모폴로지 연산 mask 사이즈 n X n
 #define GAUSSIAN_MASK   7                   // 가우시안 연산 mask 사이즈 n X n
-#define MA_FILTER       10                  // moving average filter 사이즈
+#define MA_FILTER       5                  // moving average filter 사이즈
 
 // Chessboard Parameter
 #define CHESSBOARDGRID  0.025               // Chessboard 사각형 한 변 길이 [m]
@@ -36,12 +38,16 @@
 #define I2W             1                   // image-->world
 #define W2I             0                   // world-->image
 
+#define deg2rad         PI/180.0
+#define rad2deg         180/PI
+
 #define LD              287                 // Lookahead Distance 1.5[m]일때 y축 픽셀좌표
 #define SECTION1        348                 // SECTION1 시작 y좌표 (1.3[m]) //348     
 #define SECTION2        287                 // SECTION2 시작 y좌표 (1.5[m]) //286.5
 #define SECTION3        240                 // SECTION3 시작 y좌표 (1.7[m]) //240
 #define SECTIONEND      204                 // SECTION3 끄ㅌ y좌표 (1.9[m]) //204
-#define LANEWIDTH       0.86                 // 차선 폭[m]
+#define LANEWIDTH       0.86                // 차선 폭[m]
+#define TRAILERHALF     0.3                 // 트레일러 폭 절반
 
 #define HOUGH           0                   // HoughLines
 #define HOUGHP          1                   // HoughLinesP
@@ -97,7 +103,7 @@ std::vector<cv::Point2f> MAF_buf, SEC1_buf, BOTTOM_buf;   // Moving Average Filt
 // Save Video Parameter
 const double fps = 30.0;            // 비디오 프레임수
 int fourcc = cv::VideoWriter::fourcc('X', '2', '6', '4'); // 비디오 코덱 'M', 'P', '4', 'V'
-cv::VideoWriter video_line("line_test55.mp4", fourcc, fps, cv::Size(800, 600), true);   // 비디오 파일명과 사이즈 등
+// cv::VideoWriter video_line("line_test55.mp4", fourcc, fps, cv::Size(800, 600), true);   // 비디오 파일명과 사이즈 등
 // cv::VideoWriter video_ori("ori_test12.mp4", fourcc, fps, cv::Size(800, 600), true);   // 비디오 파일명과 사이즈 등
 // cv::VideoCapture cap("yellow_line_test44.mp4");      
 cv::VideoCapture cap("ori_test54.mp4");     
@@ -130,6 +136,10 @@ static int lowTH = 50, highTH = 150;
 static int houghTH = 40;
 static int houghPTH = 25, minLine = 15, maxGap=25;
 
+// Canny edge Threshold
+static int linear_vel = 25, angular_vel = 50;
+static int draw_t = 10;
+static int draw_t2 = 5;
 
 /*------------Fuction Prototype------------*/
 void ImageCallback(const sensor_msgs::Image::ConstPtr &img);            // 이미지 subscribe 될 때 호출되는 함수
@@ -149,6 +159,8 @@ void Projection(const cv::Point2f& src, cv::Point2f& dst,
                 bool direction = I2W);  // 픽셀좌표계-->월드좌표계 , 월드좌표계-->픽셀좌표계 변환하는 함수 (input vector, output vector, 변환 방법)
 void Projection(const std::vector<cv::Point2f>& src, std::vector<cv::Point2f>& dst,
                 bool direction = I2W);  // 픽셀좌표계-->월드좌표계 , 월드좌표계-->픽셀좌표계 변환하는 함수 (input vector, output vector, 변환 방법)
+void drawPath(const cv::Mat& img_draw, const cv::Point2f& worldP);
+void drawPath(const cv::Mat& img_draw);
 
 /*------------Fuction Expression------------*/
 int main(int argc, char **argv)
@@ -159,7 +171,6 @@ int main(int argc, char **argv)
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub_img = it.subscribe("/image_raw", 1, ImageCallback);
     read_pub = nh.advertise<std_msgs::Int16MultiArray>("/lookahead_Point", 1000);
-
 
     if(!cap.isOpened()){
         std::cout << "Can't open the video!";
@@ -182,7 +193,7 @@ void ImageCallback(const sensor_msgs::Image::ConstPtr &img){
         img_bgr = cv_ptr->image;
         
         cap >> img_bgr;
-        
+        // img_click = img_bgr.clone();
         if(cali_flag == 1){
             // Projection(cv::Point2f{0,1.30},lRange,W2I); //348
             // Projection(cv::Point2f{0,1.50},lRange,W2I); //286.5
@@ -203,7 +214,7 @@ void ImageCallback(const sensor_msgs::Image::ConstPtr &img){
 
             // setROI(img_bgr,img_roi,poly);
         }
-       
+        // drawPath(img_bgr);
         setROI(img_bgr,img_roi,poly);
         Convert_Binary(img_roi, img_binary, true);
         Edge_Detect(img_binary, img_edge, true);
@@ -244,11 +255,10 @@ void MouseCallback(int event, int x, int y, int flags, void *userdata){
 	    cv::Point word_center;	//text의 중심좌표를 word좌표와 일치시키기위한 계산식
 	    word_center.x = clickP.x - (size.width / 2);
 	    word_center.y = clickP.y + (size.height);
-        cv::circle(img_click, clickP, 2, BLUE, -1);
-	    cv::putText(img_click, coord, word_center, font, fontScale, BLACK, thickness, 8);
-        
-        cv::imshow("check clicked", img_click);
-        cv::waitKey(1);
+        // cv::circle(img_click, clickP, 2, BLUE, -1);
+	    // cv::putText(img_click, coord, word_center, font, fontScale, BLACK, thickness, 8);
+        // // cv::imshow("check clicked", img_click);
+        // cv::waitKey(1);
         click_cnt++;
     }
 }
@@ -315,8 +325,8 @@ void Convert_Binary(const cv::Mat& img, cv::Mat& img_binary, bool show_trackbar)
     cv::erode(img_binary, img_binary, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(MORPH_MASK,MORPH_MASK)));
     cv::dilate(img_binary, img_binary, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(MORPH_MASK,MORPH_MASK)));
 
-    cv::imshow("Binary", img_binary);
-    cv::waitKey(1);
+    // cv::imshow("Binary", img_binary);
+    // cv::waitKey(1);
 }
 
 void Edge_Detect(const cv::Mat& img_gray, cv::Mat& img_edge, bool show_trackbar){
@@ -329,8 +339,8 @@ void Edge_Detect(const cv::Mat& img_gray, cv::Mat& img_edge, bool show_trackbar)
     cv::GaussianBlur(img_edge, img_edge, cv::Size(GAUSSIAN_MASK,GAUSSIAN_MASK), 0, 0);
     cv::Canny(img_edge, img_edge, lowTH, highTH);
     
-    cv::imshow("Edge", img_edge);
-    cv::waitKey(1);
+    // cv::imshow("Edge", img_edge);
+    // cv::waitKey(1);
 }
 
 void Final_Line(const cv::Mat& img_edge, std::vector<cv::Point2f>& left, std::vector<cv::Point2f>& right, cv::Scalar Lcolor, cv::Scalar Rcolor){
@@ -647,113 +657,7 @@ void Final_Line(const cv::Mat& img_edge, std::vector<cv::Point2f>& left, std::ve
         left.push_back(leftP1);
         left.push_back(leftP2);
     }
-    // // 왼쪽차선 없고 우회전 경우
-    // else if((leftLines.size()==0) && (remainL.size()==0) && (rightLines.size()==0) && (remainR.size()!=0)){    
-    //     // 최종차선 초기갑ㅅ 설정
-    //     finalLine[1][0] = remainR[0][0];
-    //     finalLine[1][1] = remainR[0][1];
-    //     finalLine[1][2] = remainR[0][2];
-    //     finalLine[1][3] = remainR[0][3];
 
-    //     float slope, rslope=0.0, lslope=0.0;    // 기울기 담을 변수
-
-    //     for(int r=0; r<remainR.size(); r++){
-    //         if(remainR[r][2]-remainR[r][0] == 0)  slope = 999.9;
-    //         else    slope = (remainR[r][3]-remainR[r][1])/
-    //                  (float)(remainR[r][2]-remainR[r][0]);
-
-    //         if(slope < rslope){
-    //             // 오른쪽 차선 중 기울기가 가장 수직에 가까운 선분 검출
-    //             finalLine[1][0] = remainR[r][0];
-    //             finalLine[1][1] = remainR[r][1];
-    //             finalLine[1][2] = remainR[r][2];
-    //             finalLine[1][3] = remainR[r][3];
-
-    //             rslope = slope;
-    //         }
-    //     }
-
-    //     // 검출된 오른쪽 차선의 point 담기
-    //     rightP1 = {(int)finalLine[1][0],(int)finalLine[1][1]};
-    //     rightP2 = {(int)finalLine[1][2],(int)finalLine[1][3]};
-
-    //     cv::Point2f worldR1, worldR2;
-    //     Projection(rightP1,worldR1);
-    //     Projection(rightP2,worldR2);
-
-    //     cv::Point virP1,virP2;
-    //     virP1.x = worldR1.x - LANEWIDTH;
-    //     virP1.y = worldR1.y;
-    //     virP2.x = worldR2.x - LANEWIDTH;
-    //     virP2.y = worldR2.y;
-
-    //     cv::Point2f vir_leftP1,vir_leftP2;
-    //     Projection(virP1,vir_leftP1,W2I);
-    //     Projection(virP2,vir_leftP2,W2I);
-
-    //     right.push_back(rightP1);
-    //     right.push_back(rightP2);
-    //     left.push_back(vir_leftP1);
-    //     left.push_back(vir_leftP2);
-    // }
-    // // 오른쪽 차선 없고 좌회전 경우
-    // else if((leftLines.size()==0) && (remainL.size()!=0) && (rightLines.size()==0) && (remainR.size()==0)){    
-    //     // 최종차선 초기갑ㅅ 설정
-    //     finalLine[0][0] = remainL[0][0];
-    //     finalLine[0][1] = remainL[0][1];
-    //     finalLine[0][2] = remainL[0][2];
-    //     finalLine[0][3] = remainL[0][3];
-
-    //     float slope, rslope=0.0, lslope=0.0;    // 기울기 담을 변수
-
-    //     for(int l=0; l<remainL.size(); l++){
-    //         if(remainL[l][2]-remainL[l][0] == 0)  slope = 999.9;
-    //         else    slope = (remainL[l][3]-remainL[l][1])/
-    //                  (float)(remainL[l][2]-remainL[l][0]);
-
-    //         if(slope > lslope){
-    //             // 왼쪽 차선 중 기울기가 가장 수직에 가까운 선분 검출
-    //             finalLine[0][0] = remainL[l][0];
-    //             finalLine[0][1] = remainL[l][1];
-    //             finalLine[0][2] = remainL[l][2];
-    //             finalLine[0][3] = remainL[l][3];
-
-    //             lslope = slope;
-    //         }
-    //     }
-
-    //     // 검출된 오른쪽 차선의 point 담기
-    //     leftP1 = {(int)finalLine[0][0],(int)finalLine[0][1]};
-    //     leftP2 = {(int)finalLine[0][2],(int)finalLine[0][3]};
-
-    //     cv::Point2f worldL1, worldL2;
-    //     Projection(leftP1,worldL1);
-    //     Projection(leftP2,worldL2);
-
-    //     cv::Point virP1,virP2;
-    //     virP1.x = worldL1.x + LANEWIDTH;
-    //     virP1.y = worldL1.y;
-    //     virP2.x = worldL2.x + LANEWIDTH;
-    //     virP2.y = worldL2.y;
-
-    //     cv::Point2f vir_rightP1,vir_rightP2;
-    //     Projection(virP1,vir_rightP1,W2I);
-    //     Projection(virP2,vir_rightP2,W2I);
-
-    //     right.push_back(vir_rightP1);
-    //     right.push_back(vir_rightP2);
-    //     left.push_back(leftP1);
-    //     left.push_back(leftP2);
-    // }
-    // else{
-    //     // std::cout << "No Line Detected!" << std::endl;
-    // }
-
-    if((right.size()!=0) && (left.size()!=0)){
-        // 차선 그리기
-        cv::line(img_comb, left[0], left[1], Lcolor, 2, 8);
-        cv::line(img_comb, right[0], right[1], Rcolor, 2, 8);
-    }
 }
 
 void Line_detect(const cv::Mat& img_edge, const cv::Mat& img_draw, bool show_trackbar){
@@ -796,12 +700,12 @@ void Line_detect(const cv::Mat& img_edge, const cv::Mat& img_draw, bool show_tra
         L1p = bottom.x;
         R1p = bottom.y;
 
-        std::string coord = "L " + std::to_string((int)L1p) + ", R " + std::to_string((int)R1p);
-	    cv::Size size = cv::getTextSize(coord, font, fontScale, thickness, &baseLine);	//text사이즈계산 함수
-	    cv::Point word_center;	//text의 중심좌표를 word좌표와 일치시키기위한 계산식
-	    word_center.x = (img_comb.cols/2) - (size.width / 2);
-	    word_center.y = (img_comb.rows-30) + (size.height);
-	    cv::putText(img_comb, coord, word_center, font, fontScale, BLACK, thickness, 8);
+        // std::string coord = "L " + std::to_string((int)L1p) + ", R " + std::to_string((int)R1p);
+	    // cv::Size size = cv::getTextSize(coord, font, fontScale, thickness, &baseLine);	//text사이즈계산 함수
+	    // cv::Point word_center;	//text의 중심좌표를 word좌표와 일치시키기위한 계산식
+	    // word_center.x = (img_comb.cols/2) - (size.width / 2);
+	    // word_center.y = (img_comb.rows-30) + (size.height);
+	    // cv::putText(img_comb, coord, word_center, font, fontScale, BLACK, thickness, 8);
         
         if((L1p < cx) && (R1p > cx)){
             cp1 = {(int)((L1p+R1p)/2), SECTION1};
@@ -829,18 +733,19 @@ void Line_detect(const cv::Mat& img_edge, const cv::Mat& img_draw, bool show_tra
             cv::Point2f wp;
             Projection(s1,wp); // Lookahead Point 실제 월드 좌표로 변환[m]
             old_wp = wp;
-            std::string coord = "(" + std::to_string((int)(wp.x*100)) + "," + std::to_string((int)(wp.y*100)) + ") cm";
-	        cv::Size size = cv::getTextSize(coord, font, fontScale, thickness, &baseLine);	//text사이즈계산 함수
-	        cv::Point word_center;	//text의 중심좌표를 word좌표와 일치시키기위한 계산식
-	        word_center.x = s1.x - (size.width / 2);
-	        word_center.y = s1.y + (size.height);
-	        cv::putText(img_comb, coord, word_center, font, fontScale, BLACK, thickness, 8);
+            // std::string coord = "(" + std::to_string((int)(wp.x*100)) + "," + std::to_string((int)(wp.y*100)) + ") cm";
+	        // cv::Size size = cv::getTextSize(coord, font, fontScale, thickness, &baseLine);	//text사이즈계산 함수
+	        // cv::Point word_center;	//text의 중심좌표를 word좌표와 일치시키기위한 계산식
+	        // word_center.x = s1.x - (size.width / 2);
+	        // word_center.y = s1.y + (size.height);
+	        // cv::putText(img_comb, coord, word_center, font, fontScale, BLACK, thickness, 8);
             
             std_msgs::Int16MultiArray lookahead_point;
             lookahead_point.data.clear();
             lookahead_point.data.push_back((int)(wp.x*100));
             lookahead_point.data.push_back((int)(wp.y*100));
             read_pub.publish(lookahead_point);
+            std::cout << "x : " << (int)(wp.x*100) << ", y : " << (int)(wp.y*100) << std::endl;
         }
     }
     else{
@@ -853,9 +758,9 @@ void Line_detect(const cv::Mat& img_edge, const cv::Mat& img_draw, bool show_tra
 	    cv::putText(img_comb, coord, word_center, font, fontScale, BLACK, thickness, 8);
     }
     
-    cv::imshow("Line_detect", img_comb);
-    video_line << img_comb;   // 저장할 영상 이미지
-    cv::waitKey(1);
+    // cv::imshow("Line_detect", img_comb);
+    // video_line << img_comb;   // 저장할 영상 이미지
+    // cv::waitKey(1);
 
 }
 
