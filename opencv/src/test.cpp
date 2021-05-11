@@ -16,9 +16,9 @@
 /*------------Constant------------*/
 #define PI              3.141592
 
-#define MORPH_MASK      10                  // 모폴로지 연산 mask 사이즈 n X n
-#define GAUSSIAN_MASK   7                   // 가우시안 연산 mask 사이즈 n X n
-#define MA_FILTER       5                  // moving average filter 사이즈
+#define MORPH_MASK      3                  // 모폴로지 연산 mask 사이즈 n X n
+#define GAUSSIAN_MASK   3                  // 가우시안 연산 mask 사이즈 n X n
+#define MA_FILTER       5                 // moving average filter 사이즈
 
 // Chessboard Parameter
 #define CHESSBOARDGRID  0.025               // Chessboard 사각형 한 변 길이 [m]
@@ -41,12 +41,12 @@
 #define deg2rad         PI/180.0
 #define rad2deg         180/PI
 
-#define LD              287                 // Lookahead Distance 1.5[m]일때 y축 픽셀좌표
-#define SECTION1        348                 // SECTION1 시작 y좌표 (1.3[m]) //348     
-#define SECTION2        287                 // SECTION2 시작 y좌표 (1.5[m]) //286.5
-#define SECTION3        240                 // SECTION3 시작 y좌표 (1.7[m]) //240
-#define SECTIONEND      204                 // SECTION3 끄ㅌ y좌표 (1.9[m]) //204
-#define LANEWIDTH       0.86                // 차선 폭[m]
+#define LD              103                 // Lookahead Distance 1.5[m]일때 y축 픽셀좌표
+#define SECTION1        127                 // SECTION1 시작 y좌표 (1.3[m]) //348     
+#define SECTION2        103                 // SECTION2 시작 y좌표 (1.5[m]) //286.5
+#define SECTION3        85                  // SECTION3 시작 y좌표 (1.7[m]) //240
+#define SECTIONEND      70                  // SECTION3 끄ㅌ y좌표 (1.9[m]) //204
+#define LANEWIDTH       1.2                // 차선 폭[m]
 #define TRAILERHALF     0.3                 // 트레일러 폭 절반
 
 #define HOUGH           0                   // HoughLines
@@ -106,7 +106,7 @@ int fourcc = cv::VideoWriter::fourcc('X', '2', '6', '4'); // 비디오 코덱 'M
 // cv::VideoWriter video_line("line_test55.mp4", fourcc, fps, cv::Size(800, 600), true);   // 비디오 파일명과 사이즈 등
 // cv::VideoWriter video_ori("ori_test12.mp4", fourcc, fps, cv::Size(800, 600), true);   // 비디오 파일명과 사이즈 등
 // cv::VideoCapture cap("yellow_line_test44.mp4");      
-cv::VideoCapture cap("ori_test54.mp4");     
+cv::VideoCapture cap("/home/annie/ori_test54.mp4");     
 
 // putText Parameter
 static int font = cv::FONT_HERSHEY_SIMPLEX;  // normal size sans-serif font
@@ -192,7 +192,7 @@ void ImageCallback(const sensor_msgs::Image::ConstPtr &img){
         cv_ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::BGR8);
         img_bgr = cv_ptr->image;
         
-        cap >> img_bgr;
+        // cap >> img_bgr;
         // img_click = img_bgr.clone();
         if(cali_flag == 1){
             // Projection(cv::Point2f{0,1.30},lRange,W2I); //348
@@ -209,14 +209,14 @@ void ImageCallback(const sensor_msgs::Image::ConstPtr &img){
             roi1.clear();   // 화면 제일 하단 부분(130~150cm)
             roi1.push_back(cv::Point(0, SECTION1)); // 161
             roi1.push_back(cv::Point(img_bgr.cols,SECTION1)); // 161
-            roi1.push_back(cv::Point(img_bgr.cols,SECTION2)); // 221
-            roi1.push_back(cv::Point(0,SECTION2));   //221
+            roi1.push_back(cv::Point(img_bgr.cols,20)); // 221
+            roi1.push_back(cv::Point(0,20));   //221
 
             // setROI(img_bgr,img_roi,poly);
         }
         // drawPath(img_bgr);
         setROI(img_bgr,img_roi,poly);
-        Convert_Binary(img_roi, img_binary, true);
+        Convert_Binary(img_bgr, img_binary, true);
         Edge_Detect(img_binary, img_edge, true);
         Line_detect(img_edge, img_bgr, true);
 
@@ -594,8 +594,8 @@ void Final_Line(const cv::Mat& img_edge, std::vector<cv::Point2f>& left, std::ve
         virP2.x = worldR2.x - LANEWIDTH;
         virP2.y = worldR2.y;
 
-        std::cout << "virP1 : " << virP1.x << ", " << virP1.y << std::endl;
-        std::cout << "virP2 : " << virP2.x << ", " << virP2.y << std::endl;
+        // std::cout << "virP1 : " << virP1.x << ", " << virP1.y << std::endl;
+        // std::cout << "virP2 : " << virP2.x << ", " << virP2.y << std::endl;
 
         cv::Point2f vir_leftP1,vir_leftP2;
         Projection(virP1,vir_leftP1,W2I);
@@ -605,8 +605,8 @@ void Final_Line(const cv::Mat& img_edge, std::vector<cv::Point2f>& left, std::ve
         right.push_back(rightP2);
         left.push_back(vir_leftP1);
         left.push_back(vir_leftP2);
-        std::cout << "vir_leftP1 : " << vir_leftP1.x << ", " << vir_leftP1.y << std::endl;
-        std::cout << "vir_leftP2 : " << vir_leftP2.x << ", " << vir_leftP2.y << std::endl;
+        // std::cout << "vir_leftP1 : " << vir_leftP1.x << ", " << vir_leftP1.y << std::endl;
+        // std::cout << "vir_leftP2 : " << vir_leftP2.x << ", " << vir_leftP2.y << std::endl;
     }
     // 오른쪽 차선 없을 때
     else if((leftLines.size()!=0) && (rightLines.size()==0) && (remainR.size()==0)){    // 검출된 오른쪽차선이 없을 때
@@ -826,15 +826,15 @@ void Projection(const cv::Point2f& src, cv::Point2f& dst, bool direction){
     std::vector<cv::Point2f> imagePoints;
     std::vector<cv::Point2f> objectPoints;
 
-    imagePoints.push_back(cv::Point2f(86,479));
-    imagePoints.push_back(cv::Point2f(384,479));
-    imagePoints.push_back(cv::Point2f(385,201));
-    imagePoints.push_back(cv::Point2f(235,198));
+    imagePoints.push_back(cv::Point2f(27,111));
+    imagePoints.push_back(cv::Point2f(139,108));
+    imagePoints.push_back(cv::Point2f(123,62));
+    imagePoints.push_back(cv::Point2f(43,61));
 
-    objectPoints.push_back(cv::Point2f(-0.289,1.02));
-    objectPoints.push_back(cv::Point2f( 0.011,1.02));
-    objectPoints.push_back(cv::Point2f( 0.011,1.92));
-    objectPoints.push_back(cv::Point2f(-0.289,1.92));
+    objectPoints.push_back(cv::Point2f(-0.3,1.44));
+    objectPoints.push_back(cv::Point2f( 0.3,1.44));
+    objectPoints.push_back(cv::Point2f( 0.3,2.04));
+    objectPoints.push_back(cv::Point2f(-0.3,2.04));
     
 
     cv::Mat img2World = cv::getPerspectiveTransform(imagePoints, objectPoints);
@@ -856,15 +856,15 @@ void Projection(const std::vector<cv::Point2f>& src, std::vector<cv::Point2f>& d
     std::vector<cv::Point2f> imagePoints;
     std::vector<cv::Point2f> objectPoints;
 
-    imagePoints.push_back(cv::Point2f(86,479));
-    imagePoints.push_back(cv::Point2f(384,479));
-    imagePoints.push_back(cv::Point2f(385,201));
-    imagePoints.push_back(cv::Point2f(235,198));
+    imagePoints.push_back(cv::Point2f(27,111));
+    imagePoints.push_back(cv::Point2f(139,108));
+    imagePoints.push_back(cv::Point2f(123,62));
+    imagePoints.push_back(cv::Point2f(43,61));
 
-    objectPoints.push_back(cv::Point2f(-0.289,1.02));
-    objectPoints.push_back(cv::Point2f( 0.011,1.02));
-    objectPoints.push_back(cv::Point2f( 0.011,1.92));
-    objectPoints.push_back(cv::Point2f(-0.289,1.92));
+    objectPoints.push_back(cv::Point2f(-0.3,1.44));
+    objectPoints.push_back(cv::Point2f( 0.3,1.44));
+    objectPoints.push_back(cv::Point2f( 0.3,2.04));
+    objectPoints.push_back(cv::Point2f(-0.3,2.04));
 
     cv::Mat img2World = cv::getPerspectiveTransform(imagePoints, objectPoints);
     cv::Mat world2Image = img2World.inv();
