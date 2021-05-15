@@ -40,11 +40,11 @@
 #define deg2rad PI / 180.0
 #define rad2deg 180 / PI
 
-#define LD 62           // Lookahead Distance 1.5[m]일때 y축 픽셀좌표
+#define LD 81           // Lookahead Distance 1.5[m]일때 y축 픽셀좌표
 #define SECTION1 96     // SECTION1 시작 y좌표 (1.0[m]) //348
-#define SECTION2 73     // SECTION2 시작 y좌표 (1.2[m]) //286.5
-#define SECTION3 62     // SECTION3 시작 y좌표 (1.5[m]) //240
-#define SECTIONEND 52   // SECTION3 끄ㅌ y좌표 (1.7[m]) //204
+#define SECTION2 81     // SECTION2 시작 y좌표 (1.2[m]) //286.5
+#define SECTION3 69     // SECTION3 시작 y좌표 (1.5[m]) //240
+#define SECTIONEND 59   // SECTION3 끄ㅌ y좌표 (1.7[m]) //204
 #define LANEWIDTH 1.2   // 차선 폭[m]
 #define TRAILERHALF 0.3 // 트레일러 폭 절반
 
@@ -1171,15 +1171,15 @@ void Projection(const cv::Point2f &src, cv::Point2f &dst, bool direction)
     std::vector<cv::Point2f> imagePoints;
     std::vector<cv::Point2f> objectPoints;
 
-    imagePoints.push_back(cv::Point2f(33, 121));
-    imagePoints.push_back(cv::Point2f(148, 123));
-    imagePoints.push_back(cv::Point2f(131, 71));
-    imagePoints.push_back(cv::Point2f(51, 69));
+    imagePoints.push_back(cv::Point2f(37, 104));
+    imagePoints.push_back(cv::Point2f(139, 103));
+    imagePoints.push_back(cv::Point2f(124, 62));
+    imagePoints.push_back(cv::Point2f(51, 63));
 
-    objectPoints.push_back(cv::Point2f(-0.3, 0.75));
-    objectPoints.push_back(cv::Point2f(0.3, 0.75));
-    objectPoints.push_back(cv::Point2f(0.3, 1.35));
-    objectPoints.push_back(cv::Point2f(-0.3, 1.35));
+    objectPoints.push_back(cv::Point2f(-0.3, 1.22));
+    objectPoints.push_back(cv::Point2f(0.3, 1.22));
+    objectPoints.push_back(cv::Point2f(0.3, 1.82));
+    objectPoints.push_back(cv::Point2f(-0.3, 1.82));
 
     cv::Mat img2World = cv::getPerspectiveTransform(imagePoints, objectPoints);
     cv::Mat world2Image = img2World.inv();
@@ -1203,15 +1203,15 @@ void Projection(const std::vector<cv::Point2f> &src, std::vector<cv::Point2f> &d
     std::vector<cv::Point2f> imagePoints;
     std::vector<cv::Point2f> objectPoints;
 
-    imagePoints.push_back(cv::Point2f(33, 121));
-    imagePoints.push_back(cv::Point2f(148, 123));
-    imagePoints.push_back(cv::Point2f(131, 71));
-    imagePoints.push_back(cv::Point2f(51, 69));
+    imagePoints.push_back(cv::Point2f(37, 104));
+    imagePoints.push_back(cv::Point2f(139, 103));
+    imagePoints.push_back(cv::Point2f(124, 62));
+    imagePoints.push_back(cv::Point2f(51, 63));
 
-    objectPoints.push_back(cv::Point2f(-0.3, 0.75));
-    objectPoints.push_back(cv::Point2f(0.3, 0.75));
-    objectPoints.push_back(cv::Point2f(0.3, 1.35));
-    objectPoints.push_back(cv::Point2f(-0.3, 1.35));
+    objectPoints.push_back(cv::Point2f(-0.3, 1.22));
+    objectPoints.push_back(cv::Point2f(0.3, 1.22));
+    objectPoints.push_back(cv::Point2f(0.3, 1.82));
+    objectPoints.push_back(cv::Point2f(-0.3, 1.82));
 
     cv::Mat img2World = cv::getPerspectiveTransform(imagePoints, objectPoints);
     cv::Mat world2Image = img2World.inv();
