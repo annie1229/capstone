@@ -40,7 +40,7 @@
 #define deg2rad PI / 180.0
 #define rad2deg 180 / PI
 
-#define LD 81           // Lookahead Distance 1.5[m]일때 y축 픽셀좌표
+#define LD 69           // Lookahead Distance 1.5[m]일때 y축 픽셀좌표
 #define SECTION1 96     // SECTION1 시작 y좌표 (1.0[m]) //348
 #define SECTION2 81     // SECTION2 시작 y좌표 (1.3[m]) //286.5
 #define SECTION3 69     // SECTION3 시작 y좌표 (1.5[m]) //240
