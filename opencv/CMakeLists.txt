@@ -143,7 +143,6 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/opencv_node.cpp)
 add_executable(opencv_node src/test.cpp)
-add_executable(draw_node src/drawline.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -159,10 +158,6 @@ add_executable(draw_node src/drawline.cpp)
 #   ${catkin_LIBRARIES}
 # )
 target_link_libraries(opencv_node
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
-)
-target_link_libraries(draw_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )
