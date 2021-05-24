@@ -40,11 +40,11 @@
 #define deg2rad PI / 180.0
 #define rad2deg 180 / PI
 
-#define LD 69           // Lookahead Distance 1.5[m]일때 y축 픽셀좌표
-#define SECTION1 96     // SECTION1 시작 y좌표 (1.0[m]) //348
-#define SECTION2 81     // SECTION2 시작 y좌표 (1.3[m]) //286.5
-#define SECTION3 69     // SECTION3 시작 y좌표 (1.5[m]) //240
-#define SECTIONEND 59   // SECTION3 끄ㅌ y좌표 (1.7[m]) //204
+#define LD 81           // Lookahead Distance 1.5[m]일때 y축 픽셀좌표
+#define SECTION1 96     // SECTION1 시작 y좌표 (1.3[m]) //348
+#define SECTION2 81     // SECTION2 시작 y좌표 (1.5[m]) //286.5
+#define SECTION3 69     // SECTION3 시작 y좌표 (1.7[m]) //240
+#define SECTIONEND 59   // SECTION3 끄ㅌ y좌표 (1.9[m]) //204
 #define LANEWIDTH 1.2   // 차선 폭[m]
 #define TRAILERHALF 0.3 // 트레일러 폭 절반
 
@@ -208,9 +208,9 @@ void ImageCallback(const sensor_msgs::Image::ConstPtr &img)
         {
             // Projection(cv::Point2f{0,0.7},lRange,W2I); //128
             // Projection(cv::Point2f{0,1.0},lRange,W2I); //96
-            // Projection(cv::Point2f{0,1.30},lRange,W2I); //73
-            // Projection(cv::Point2f{0,1.50},lRange,W2I); //62
-            // Projection(cv::Point2f{0,1.70},lRange,W2I); //52
+            // Projection(cv::Point2f{0,1.30},lRange,W2I); //81
+            // Projection(cv::Point2f{0,1.50},lRange,W2I); //69
+            // Projection(cv::Point2f{0,1.70},lRange,W2I); //59
 
             poly.clear();
             poly.push_back(cv::Point(0, SECTION1));              // 161
