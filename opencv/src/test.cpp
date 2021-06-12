@@ -40,11 +40,11 @@
 #define deg2rad PI / 180.0
 #define rad2deg 180 / PI
 
-#define LD 81           // Lookahead Distance 1.5[m]일때 y축 픽셀좌표
-#define SECTION1 96     // SECTION1 시작 y좌표 (1.3[m]) //348
-#define SECTION2 81     // SECTION2 시작 y좌표 (1.5[m]) //286.5
-#define SECTION3 69     // SECTION3 시작 y좌표 (1.7[m]) //240
-#define SECTIONEND 59   // SECTION3 끄ㅌ y좌표 (1.9[m]) //204
+#define LD 95           // Lookahead Distance 1.5[m]일때 y축 픽셀좌표
+#define SECTION1 144     // SECTION1 시작 y좌표 (1.3[m]) //348
+#define SECTION2 111     // SECTION2 시작 y좌표 (1.5[m]) //286.5
+#define SECTION3 95     // SECTION3 시작 y좌표 (1.7[m]) //240
+#define SECTIONEND 82   // SECTION3 끄ㅌ y좌표 (1.9[m]) //204
 #define LANEWIDTH 1.2   // 차선 폭[m]
 #define TRAILERHALF 0.3 // 트레일러 폭 절반
 
@@ -1172,15 +1172,15 @@ void Projection(const cv::Point2f &src, cv::Point2f &dst, bool direction)
     std::vector<cv::Point2f> imagePoints;
     std::vector<cv::Point2f> objectPoints;
 
-    imagePoints.push_back(cv::Point2f(37, 104));
-    imagePoints.push_back(cv::Point2f(139, 103));
-    imagePoints.push_back(cv::Point2f(124, 62));
-    imagePoints.push_back(cv::Point2f(51, 63));
+    imagePoints.push_back(cv::Point2f(37.4, 117));
+    imagePoints.push_back(cv::Point2f(151, 92.8));
+    imagePoints.push_back(cv::Point2f(15.4, 75.6));
+    imagePoints.push_back(cv::Point2f(104.8, 75.6));
 
-    objectPoints.push_back(cv::Point2f(-0.3, 1.22));
-    objectPoints.push_back(cv::Point2f(0.3, 1.22));
-    objectPoints.push_back(cv::Point2f(0.3, 1.82));
-    objectPoints.push_back(cv::Point2f(-0.3, 1.82));
+    objectPoints.push_back(cv::Point2f(-0.3, 1.23));
+    objectPoints.push_back(cv::Point2f(0.45, 1.53));
+    objectPoints.push_back(cv::Point2f(-0.6, 1.83));
+    objectPoints.push_back(cv::Point2f(-0.3, 1.83));
 
     cv::Mat img2World = cv::getPerspectiveTransform(imagePoints, objectPoints);
     cv::Mat world2Image = img2World.inv();
